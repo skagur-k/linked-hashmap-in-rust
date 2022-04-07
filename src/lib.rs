@@ -29,6 +29,21 @@ where
         (hasher.finish() % self.buckets.len() as u64) as usize // index of the bucket to put the (K,V) into.
     }
 
+    pub fn get(&self, key: &K) -> Option<&V> {
+        let bucket = self.bucket(key); // index of the bucket to get
+        self.buckets[bucket]
+            .iter() //iterate through the bucket
+            .find(|&(ref ekey, _)| ekey == key) // when bucket with key found, return Some / or None if not found
+            .map(|&(_, ref v)| v) // Return the value
+    }
+
+    pub fn remove(&mut self, key: &K) -> Option<V> {
+        let bucket = self.bucket(key);
+        let bucket = &mut self.buckets[bucket];
+        let i = bucket.iter().position(|&(ref ekey, _)| ekey == key)?;
+        Some(bucket.swap_remove(i).1)
+    }
+
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         // If the bucket has 0 items or the # of items in the buck is more than the 3/4 of the bucket size, -> resize
         if self.buckets.is_empty() || self.items > 3 * self.buckets.len() / 4 {
@@ -47,14 +62,6 @@ where
 
         bucket.push((key, value));
         None
-    }
-
-    pub fn get(&self, key: &K) -> Option<&V> {
-        let bucket = self.bucket(key); // index of the bucket to get
-        self.buckets[bucket]
-            .iter() //iterate through the bucket
-            .find(|&(ref ekey, _)| ekey == key) // when bucket with key found, return Some / or None if not found
-            .map(|&(_, ref v)| v) // Return the value
     }
 
     fn resize(&mut self) {
@@ -87,5 +94,7 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("foo", 42);
         assert_eq!(map.get(&"foo"), Some(&42));
+        assert_eq!(map.remove(&"foo"), Some(42));
+        assert_eq!(map.get(&"foo"), None);
     }
 }
