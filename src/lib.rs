@@ -50,9 +50,10 @@ where
             n => n * 2,
         };
 
-        let mut new_buckets = vec![Vec::new(); target_size];
+        let mut new_buckets = Vec::with_capacity(target_size);
+        new_buckets.extend((0..target_size).map(|_| Vec::new()));
 
-        for (key, value) in self.buckets.drain(..) {
+        for (key, value) in self.buckets.iter_mut().flat_map(|bucket| bucket.drain(..)) {
             // Drain the original buckets and fill the old key-value pairs into the new buckets
             let mut hasher = DefaultHasher::new();
             key.hash(&mut hasher);
